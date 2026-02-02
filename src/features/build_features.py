@@ -37,6 +37,18 @@ class GenomicFeatureEngineer:
             
         return encoding
 
+    def _get_flanking_sequence(self, chrom, pos, ref, size=10):
+        """
+        Simulates fetching flanking sequences. 
+        In a real scenario, this would query a Genome Fasta file.
+        """
+        import random
+        # Simulate upstream and downstream sequences
+        bases = ['A', 'C', 'G', 'T']
+        upstream = "".join(random.choices(bases, k=size))
+        downstream = "".join(random.choices(bases, k=size))
+        return upstream, downstream
+
     def process_data(self, output_path=None):
         """
         Reads VCF, extracts features, and returns a processed DataFrame.
@@ -61,9 +73,16 @@ class GenomicFeatureEngineer:
             ref_len = len(v['REF'])
             alt_len = len(v['ALT'][0])
             
-            # Feature: One-Hot Encoded REF and ALT (just first base for simplicity in basic model)
+            # Feature: One-Hot Encoded REF and ALT
             ref_onehot = self._one_hot_encode_dna(v['REF'], max_len=1)
             alt_onehot = self._one_hot_encode_dna(v['ALT'][0], max_len=1)
+            
+            # Feature: Flanking Sequences (Simulated)
+            flank_size = 5 # Size of context window on each side
+            upstream, downstream = self._get_flanking_sequence(v['CHROM'], v['POS'], v['REF'], size=flank_size)
+            
+            upstream_onehot = self._one_hot_encode_dna(upstream, max_len=flank_size)
+            downstream_onehot = self._one_hot_encode_dna(downstream, max_len=flank_size)
             
             row = {
                 'CHROM': v['CHROM'],
@@ -76,6 +95,20 @@ class GenomicFeatureEngineer:
                 'Target_Label': is_pathogenic,
                 'ClinSig_Raw': clnsig
             }
+            
+            # Add flanking features to row
+            for i in range(flank_size):
+                base_idx = i * 4
+                row[f'Up_{i}_A'] = upstream_onehot[base_idx]
+                row[f'Up_{i}_C'] = upstream_onehot[base_idx+1]
+                row[f'Up_{i}_G'] = upstream_onehot[base_idx+2]
+                row[f'Up_{i}_T'] = upstream_onehot[base_idx+3]
+                
+                row[f'Down_{i}_A'] = downstream_onehot[base_idx]
+                row[f'Down_{i}_C'] = downstream_onehot[base_idx+1]
+                row[f'Down_{i}_G'] = downstream_onehot[base_idx+2]
+                row[f'Down_{i}_T'] = downstream_onehot[base_idx+3]
+
             data.append(row)
             
         df = pd.DataFrame(data)
