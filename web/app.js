@@ -122,6 +122,60 @@ document.getElementById('loadExampleBtn').addEventListener('click', () => {
   EXAMPLES.forEach(addRow);
 });
 
+// ── CSV Upload ─────────────────────────────────────────────────────────────────
+document.getElementById('csvUpload').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const text = event.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) {
+      alert("CSV must contain a header row and at least one data row.");
+      return;
+    }
+    
+    // Naive CSV parsing
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const chromIdx = headers.indexOf('chrom');
+    const posIdx = headers.indexOf('pos');
+    const refIdx = headers.indexOf('ref');
+    const altIdx = headers.indexOf('alt');
+    const afIdx = headers.indexOf('af');
+
+    if (chromIdx === -1 || posIdx === -1 || refIdx === -1 || altIdx === -1) {
+      alert("CSV must contain 'chrom', 'pos', 'ref', 'alt' columns.");
+      return;
+    }
+
+    document.getElementById('variantRows').innerHTML = '';
+    rowCount = 0;
+
+    for (let i = 1; i < lines.length; i++) {
+        // Limit to 50 rows to keep the UI smooth
+        if (i > 50) {
+            alert("Only loading the first 50 variants from the CSV to prevent UI lag.");
+            break;
+        }
+        
+        const row = lines[i].split(',').map(c => c.trim());
+        const afVal = row[afIdx];
+        const variant = {
+            chrom: row[chromIdx],
+            pos: parseInt(row[posIdx], 10),
+            ref: row[refIdx],
+            alt: row[altIdx],
+            af: (afIdx !== -1 && afVal) ? parseFloat(afVal) : 0.0
+        };
+        addRow(variant);
+    }
+    
+    e.target.value = ""; // Clear file input
+  };
+  reader.readAsText(file);
+});
+
 // ── Form submit ────────────────────────────────────────────────────────────────
 document.getElementById('variantForm').addEventListener('submit', async (e) => {
   e.preventDefault();
