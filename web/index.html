@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeepInteractome — Variant Pathogenicity Predictor</title>
+  <meta name="description" content="AI-powered genomic variant pathogenicity prediction using deep learning and ClinVar data." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Navigation ── -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <span class="nav-logo">⬡</span>
+      <span class="nav-title">DeepInteractome</span>
+    </div>
+    <div class="nav-links">
+      <a href="#predict">Predict</a>
+      <a href="#about">About</a>
+      <a href="/docs" target="_blank">API Docs</a>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <header class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-particles" id="heroParticles"></div>
+    <div class="hero-content">
+      <div class="hero-badge">Powered by AlphaFold + ClinVar</div>
+      <h1 class="hero-title">
+        Genomic Variant<br>
+        <span class="gradient-text">Pathogenicity Prediction</span>
+      </h1>
+      <p class="hero-subtitle">
+        Submit VCF-style variants and get instant AI-driven pathogenicity scores,
+        powered by deep learning trained on the full ClinVar database.
+      </p>
+      <a href="#predict" class="btn btn-primary hero-cta">
+        Start Predicting
+        <span class="btn-arrow">↓</span>
+      </a>
+    </div>
+    <div class="hero-visual">
+      <div class="dna-helix">
+        <div class="helix-strand s1"></div>
+        <div class="helix-strand s2"></div>
+        <div class="helix-rung r1"></div>
+        <div class="helix-rung r2"></div>
+        <div class="helix-rung r3"></div>
+        <div class="helix-rung r4"></div>
+        <div class="helix-rung r5"></div>
+        <div class="helix-rung r6"></div>
+        <div class="helix-rung r7"></div>
+        <div class="helix-rung r8"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Predictor ── -->
+  <main class="main">
+    <section class="section" id="predict">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Variant Predictor</h2>
+          <p class="section-sub">Add one or more genomic variants to assess their pathogenicity.</p>
+        </div>
+
+        <div class="predictor-grid">
+
+          <!-- Input Card -->
+          <div class="card input-card">
+            <div class="card-header">
+              <span class="card-icon">🧬</span>
+              <h3>Variant Input</h3>
+            </div>
+
+            <form id="variantForm">
+              <div id="variantRows">
+                <!-- populated by JS -->
+              </div>
+              <button type="button" class="btn btn-ghost add-row-btn" id="addRowBtn">
+                + Add another variant
+              </button>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="predictBtn">
+                  <span class="btn-text">Predict Pathogenicity</span>
+                  <span class="btn-spinner hidden" id="spinner">⟳</span>
+                </button>
+                <button type="button" class="btn btn-ghost" id="loadExampleBtn">
+                  Load Example
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Results Card -->
+          <div class="card results-card" id="resultsCard">
+            <div class="card-header">
+              <span class="card-icon">📊</span>
+              <h3>Prediction Results</h3>
+              <span class="model-badge hidden" id="modelBadge"></span>
+            </div>
+            <div class="results-placeholder" id="resultsPlaceholder">
+              <div class="placeholder-icon">🔬</div>
+              <p>Submit variants to see predictions here.</p>
+            </div>
+            <div class="results-table-wrap hidden" id="resultsTableWrap">
+              <table class="results-table" id="resultsTable">
+                <thead>
+                  <tr>
+                    <th>Variant</th>
+                    <th>Classification</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+              </table>
+            </div>
+            <div class="results-error hidden" id="resultsError"></div>
+          </div>
+
+        </div><!-- /predictor-grid -->
+
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="statsBar" style="display:none">
+          <div class="stat-item">
+            <span class="stat-value" id="statTotal">0</span>
+            <span class="stat-label">Variants Tested</span>
+          </div>
+          <div class="stat-item pathogenic">
+            <span class="stat-value" id="statPath">0</span>
+            <span class="stat-label">Pathogenic</span>
+          </div>
+          <div class="stat-item benign">
+            <span class="stat-value" id="statBenign">0</span>
+            <span class="stat-label">Benign</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="statAvg">—</span>
+            <span class="stat-label">Avg. Confidence</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── About ── -->
+    <section class="section section-dark" id="about">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">How It Works</h2>
+        </div>
+        <div class="pipeline">
+          <div class="pipeline-step">
+            <div class="step-num">01</div>
+            <h4>Data</h4>
+            <p>Trained on the full ClinVar VCF (~900 MB) with 750 K+ annotated variants across pathogenic and benign classifications.</p>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">02</div>
+            <h4>Features</h4>
+            <p>Extracts genomic (one-hot bases, allele frequency, HGVS, molecular consequence) and structural (AlphaFold2 pLDDT) features.</p>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">03</div>
+            <h4>Model</h4>
+            <p>PyTorch Deep Neural Network or Random Forest ensemble. Outputs a calibrated pathogenic probability between 0 and 1.</p>
+          </div>
+          <div class="pipeline-arrow">→</div>
+          <div class="pipeline-step">
+            <div class="step-num">04</div>
+            <h4>Report</h4>
+            <p>Returns PATHOGENIC / BENIGN classification with confidence score via fast REST API.</p>
+          </div>
+        </div>
+        <div class="tech-tags">
+          <span class="tag">Python</span>
+          <span class="tag">PyTorch</span>
+          <span class="tag">FastAPI</span>
+          <span class="tag">ClinVar</span>
+          <span class="tag">AlphaFold2</span>
+          <span class="tag">scikit-learn</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>DeepInteractome · Open-source variant pathogenicity predictor · 
+      <a href="/docs">API Docs</a>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

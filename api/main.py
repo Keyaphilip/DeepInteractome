@@ -1,6 +1,7 @@
 """
 DeepInteractome FastAPI — Variant Pathogenicity Prediction API
 Run with:  uvicorn api.main:app --reload
+Web UI:    http://127.0.0.1:8000/ui
 """
 import os
 import sys
@@ -9,6 +10,8 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 
 # ── Project-root on sys.path so src.* imports work ──────────────────────────
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -36,10 +39,18 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],   # tighten in production
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Static web UI ─────────────────────────────────────────────────────────────
+_WEB_DIR = os.path.join(ROOT, "web")
+if os.path.isdir(_WEB_DIR):
+    app.mount("/ui", StaticFiles(directory=_WEB_DIR, html=True), name="ui")
+    logger.info("Web UI mounted at /ui")
+else:
+    logger.warning("web/ directory not found — UI not available")
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 RF_MODEL_PATH = os.path.join(ROOT, "models", "rf_classifier.pkl")
@@ -93,9 +104,10 @@ def health_check():
     """Health check — confirms the API is running."""
     return {
         "status": "ok",
-        "message": "DeepInteractome API is running",
+        "message": "DeepInteractome API is running. Web UI at /ui",
         "rf_model_loaded": os.path.exists(RF_MODEL_PATH),
         "dnn_model_loaded": os.path.exists(DNN_MODEL_PATH),
+        "web_ui": os.path.isdir(os.path.join(ROOT, "web")),
     }
 
 
