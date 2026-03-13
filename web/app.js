@@ -6,19 +6,83 @@ const API_BASE = '';   // same origin; update if hosting separately
 (function spawnParticles() {
   const container = document.getElementById('heroParticles');
   if (!container) return;
-  for (let i = 0; i < 28; i++) {
+  
+  const particles = [];
+  const numParticles = 40;
+  
+  for (let i = 0; i < numParticles; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     const size = Math.random() * 4 + 2;
+    
+    // Initial random positions
+    let x = Math.random() * 100;
+    let y = Math.random() * 100;
+    
     p.style.cssText = `
       width: ${size}px; height: ${size}px;
-      left: ${Math.random() * 100}%;
-      bottom: ${Math.random() * -20}%;
-      animation-duration: ${Math.random() * 14 + 10}s;
-      animation-delay: ${Math.random() * -15}s;
+      left: ${x}%;
+      top: ${y}%;
+      transition: transform 0.2s ease-out;
     `;
+    
     container.appendChild(p);
+    
+    particles.push({
+      el: p,
+      x: x,
+      y: y,
+      speedX: (Math.random() - 0.5) * 0.05,
+      speedY: (Math.random() - 0.5) * 0.05,
+      baseSpeedX: (Math.random() - 0.5) * 0.02,
+      baseSpeedY: (Math.random() - 0.5) * 0.02
+    });
   }
+
+  let mouseX = 0;
+  let mouseY = 0;
+  
+  // Track mouse movement
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX / window.innerWidth;
+    mouseY = e.clientY / window.innerHeight;
+  });
+
+  // Animation loop
+  function animate() {
+    particles.forEach(p => {
+      // Float naturally
+      p.x += p.baseSpeedX;
+      p.y -= p.baseSpeedY + 0.02; // Always float up slightly
+      
+      // Wrap around
+      if (p.x < 0) p.x = 100;
+      if (p.x > 100) p.x = 0;
+      if (p.y < -10) p.y = 110;
+      
+      // Calculate distance to mouse
+      const dx = (p.x / 100) - mouseX;
+      const dy = (p.y / 100) - mouseY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      // Repel from mouse slightly
+      let offsetX = 0;
+      let offsetY = 0;
+      if (dist < 0.2) {
+         const force = (0.2 - dist) / 0.2;
+         offsetX = (dx / dist) * force * 5;
+         offsetY = (dy / dist) * force * 5;
+      }
+      
+      p.el.style.left = `${p.x}%`;
+      p.el.style.top = `${p.y}%`;
+      p.el.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    });
+    
+    requestAnimationFrame(animate);
+  }
+  
+  animate();
 })();
 
 // ── Variant row template ───────────────────────────────────────────────────────
